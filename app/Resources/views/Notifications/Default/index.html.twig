@@ -1,0 +1,42 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+
+    <div class="">
+        <h1>Notifications center</h1><small><em>{{ title }}</em></small>
+        <p class="js-server-position"></p>
+        <p class="js-server-notifications"></p>
+        <p class="js-server-clients"></p>
+        <p class="js-data-server" data-room="67"
+                                data-id="{{ app.user.id }}"
+                                data-username="{{ app.user.username }}"
+                                data-email="{{ app.user.email }}"></p>
+        <p class=""></p>
+        <p class=""></p>
+        <p class=""></p>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="{{ asset('js/src/Notification/client.js') }}"></script>
+
+    <script>
+    /*
+        $( document ).ready(function() {
+            var conn = new WebSocket('ws://localhost:8081');
+            conn.onopen = function(e) {
+                console.log("Connection established!");
+                conn.send('test test test');
+            };
+
+            conn.onmessage = function(e) {
+                console.log(e.data);
+            };
+
+       });
+       */
+    </script>
+
+{% endblock %}
+

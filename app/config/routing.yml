@@ -1,0 +1,11 @@
+user:
+    resource: "@UserBundle/Resources/config/routing.yml"
+    prefix:   /
+
+notification:
+    resource: "@NotificationBundle/Resources/config/routing.yml"
+    prefix:   /notifications
+
+app:
+    resource: '@AppBundle/Controller/'
+    type: annotation
