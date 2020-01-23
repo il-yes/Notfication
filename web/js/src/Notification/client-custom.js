@@ -5,7 +5,7 @@ export class ClientCustom extends HTMLElement {
     constructor() {
         super();
 
-        this.namespace = 'kyc_user';
+        this.name_space = 'kyc_user';
         this.conn = new WebSocket(url);    
         this.attachShadow({mode: 'open'})
         this.render()
@@ -88,7 +88,8 @@ export class ClientCustom extends HTMLElement {
                 'is_handler' : false,
                 'user'       : this.user
             },
-            'namespace'   : this.namespace,
+            'route'   : 'pool_kyc_connexion',
+            name_space: this.name_space
         };
         return msg
     }

@@ -11,7 +11,7 @@ namespace NotificationBundle\Factory;
 
 class Message
 {
-    const NAMESPACE        = 'kyc_user';
+    const ROUTE        = 'kyc_user';
     const TYPE_CONNEXION   = 'connexion';
     const TYPE_DECONNEXION = 'deconnexion';
     const TYPE_POSITION    = 'position';
@@ -22,7 +22,7 @@ class Message
     private function core($type, $icon, $msg, $data)
     {
         return [ 
-            'namespace' => self::NAMESPACE,
+            'namespace' => self::ROUTE,
             'type' => $type,
             'icon' => $icon,
             'msg'  => $msg,
