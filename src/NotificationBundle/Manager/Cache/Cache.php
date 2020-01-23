@@ -1,63 +1,91 @@
 <?php
+/**
+ * Created by PhpStorm.
+ * User: manu
+ * Date: 12/04/18
+ * Time: 15:24
+ */
 
 namespace NotificationBundle\Manager\Cache;
 
 
-abstract class Cache
+use NotificationBundle\Manager\ManagerInterface;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+
+abstract class Cache implements ManagerInterface
 {
+    /** @var FilesystemAdapter $cache */
+    protected $cache;
+
     /**
-     * - Set les data dans le cache
-     *
+     * - Formatte la clé, créé un cacheItem (clé + valeur) pour une eventuelle insertion en cache
      */
-    public function cacheSet($key, $val)
+    public abstract function keyFormater($key);
+
+
+    /**
+     * - Create a new item getting it from the cache
+     * @param $key
+     * @return mixed|\Symfony\Component\Cache\CacheItem
+     */
+    public function createKey($key)
     {
-        $val = var_export($val, true);
-
-        $data = $this->dataFormater($key, $val);
-
-        file_put_contents($this->cacheFile(), $data, FILE_APPEND | LOCK_EX);
+        return $this->cache->getItem($key);
     }
 
     /**
-     * - Récupère ttes les data du fichier cache
-     *
+     * - Set cache
      */
-    public function cacheGetAll()
+    public function setCache($key, $val)
     {
-        return file($this->cacheFile());
+        $key->set($val);
+        $this->cache->save($key);
     }
 
     /**
-     * - Clear cache file
-     *
+     * - Vérification de la présence de la donnée en cache
+     * @param $cacheItem
+     * @return array
      */
-    public function cacheReset()
+    public function isExist($cacheItem)
     {
-        $data = '';
-
-        file_put_contents($this->file, $data,  LOCK_EX);
-
-        return$this;
-    }
-
-
-    public function cacheDelete($key)
-    {
-
-
-        $updatedFile = '';
-        $file = file($this->cacheFile());
-        $val = $this->cacheFindKey($key);
-
-        foreach ($file as $key => $line)
+        if ($cacheItem->isHit())
         {
-            if($line != $val['data'])
-            {
-                $updatedFile .= $line;
-            }
+            return $this->inCache($cacheItem);
         }
 
-        file_put_contents($this->cacheFile(), $updatedFile, LOCK_EX);
+        return $this->notInCache($cacheItem);
+    }
 
+    /**
+     * - Delete cache
+     * @param $key
+     */
+    public function delete($key)
+    {
+        $formattedKey = $this->keyFormater($key);
+        $this->cache->deleteItem($formattedKey);
+        echo "Deconnexion : client removed from the cache \n";
+    }
+
+    /**
+     * - Clear cache
+     */
+    public function clear()
+    {
+        $this->cache->clear();
+    }
+
+    /**
+     * - Reset cache
+     */
+    public function reset()
+    {
+        return $this->cache->reset();
+    }
+
+    public function save()
+    {
+        // TODO: Implement save() method.
     }
 }

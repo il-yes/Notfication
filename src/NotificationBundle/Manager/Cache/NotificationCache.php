@@ -8,9 +8,8 @@ use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 
-class NotificationCache
+class NotificationCache extends Cache
 {
-    /* ================= V-2 ================= */
     protected $container;
 
     /**
@@ -23,105 +22,109 @@ class NotificationCache
         $this->cache  = new FilesystemAdapter();
     }
 
-    protected function cacheFile()
-    {
-        return $this->container->getParameter('cache_file');
-    }
 
     /**
-     *
+     * - Formatte la clé, créé un cacheItem (clé + valeur) pour une eventuelle insertion en cache
      */
-    public function setCache($key, $val)
+    public function processing($room, $val)
     {
-        var_dump($key->get());
-        $key->set($val);
-        $this->cache->save($key);
-    }
-
-    /**
-     *
-     */
-    public function inputProcess($room, $val)
-    {
+        //var_dump($room);
         $key = $this->keyFormater($room->id);
-        $key = $this->createKey($key);
+        $cacheItem = $this->createKey($key);
 
-        return $this->input($key, $val);
+        return $this->input($cacheItem, $val);
     }
 
-    public function createKey($key)
-    {
-        // create a new item getting it from the cache
-        return $this->cache->getItem('stats.'. $key);
-    }
 
 
     /**
      * - Gère l'entrée (le user qui vient de se connecter) dans le fichier cache
-     *
      */
-    public function input($key, $val)
+    public function input($cacheItem, $val)
     {
-        // Vérification de la présence de la clé dans le cache
-        $keyChecker = $this->isExist($key);
+        $keyChecker = $this->isExist($cacheItem);
 
         if($keyChecker['response'])
         {
-            // Clé dans le cache - Controle des valeurs du cache et de l'entreé
-            return $this->managementOfTheExisting($key, $val, $keyChecker);
+
+            /** Clé dans le cache - Controle des valeurs du cache et de l'entreé */
+            return $this->existingKey($val, $keyChecker);
         }
 
-        // Enregistrement dans le cache
-        return $this->storeInCache($key, $val, $keyChecker);
-    }
-
-    private function isExist($key)
-    {
-        if (!$key->isHit())
-        {
-            return [
-                'response' => false,
-                'data'   => $key
-            ];
-        }
-
-        return [
-            'response' => true,
-            'data'   => $key
-        ];
+        /** Enregistrement dans le cache */
+        return $this->storeInCache($cacheItem, $val, $keyChecker);
     }
 
     /**
-     * - Traite les data au bon format pour l'enregistrement en cache
+     * - Traite la clé au bon format pour l'enregistrement en cache
      *
      */
     public function keyFormater($key)
     {
         $key = (string) $key;
-        $exp = 'kyc_'. (string) $key;
+        $exp = 'stats.kyc_'. (string) $key;
         return $exp;
     }
 
-    private function storeInCache($key, $val, $keyChecker)
+    /**
+     * - Sauvegarde en cache
+     * @param $key
+     * @param $val
+     * @param $keyChecker
+     * @return array
+     */
+    protected function storeInCache($key, $val, $keyChecker)
     {
         $this->setCache($key, $val);
         return $this->handlerResponse($keyChecker);
     }
 
-    private function managementOfTheExisting($key, $val, $keyChecker)
+    /**
+     * - Gère les cas ou la cle existe (déjà en cache)
+     * @param $val
+     * @param $keyChecker
+     * @return array
+     */
+    protected function existingKey($val, $keyChecker)
     {
         $valChecker = $this->valueMatcher($keyChecker['data'], $val);
 
         if($valChecker['response'])
         {
-            // le connecté est le gestionnaire et est déjà dans le cache | notif : confirmation
+            /** le connecté est le gestionnaire et est déjà dans le cache */
             return $this->toHandlerResponse($valChecker);
         }
-        // le connecté n'est pas le gestionnaire | notif : information
+        /** le connecté n'est pas le gestionnaire */
         return $this->toNewClientResponse($valChecker);
     }
 
-    private function toHandlerResponse($valChecker)
+    /**
+     * - Comparaison entre la valeur en cache et la resource
+     * - True : ça match, la val correspond a celle dans le cache
+     * - False : l'id du connecté ne correspond pas a celui du gestionnaire
+     * @param $key
+     * @param $resource
+     * @return array
+     */
+    public function valueMatcher($key, $resource)
+    {
+        if($key->get() == $resource)
+        {
+            /** matched !!! : le connecté est bien le gestionnaire */
+            return $this->valueMatched($key);
+        }
+
+        /** no matched : clé enregistrée mais pas appareillée avec ce connecté */
+        return $this->valueNotMatched($key);
+    }
+
+
+    /**
+     * - Message à destination du new client déjà enregistré dans le cache (à la suite d'un rafraîchissement du navigateur...)
+     * @param $valChecker
+     * @return array
+     */
+    protected function toHandlerResponse($valChecker)
     {
         return [
             'response' => false,
@@ -130,7 +133,12 @@ class NotificationCache
         ];
     }
 
-    private function toNewClientResponse($valChecker)
+    /**
+     * - Message à destination du new client
+     * @param $valChecker
+     * @return array
+     */
+    protected function toNewClientResponse($valChecker)
     {
         return [
             'response' => false,
@@ -139,6 +147,11 @@ class NotificationCache
         ];
     }
 
+    /**
+     * - Message à destination du new client dont la clé vient de lui etre affecté dans le cache
+     * @param $keyChecker
+     * @return array
+     */
     public function handlerResponse($keyChecker)
     {
         return [
@@ -148,38 +161,53 @@ class NotificationCache
         ];
     }
 
-
-
     /**
-     * - Compare l'id dans la donnée du cache et l'id du connecté
-     * - True : ça match, la val correspond a celle dans le cache
-     * - False : l'id du connecté ne correspond pas a celui du gestionnaire
-     * @param $key
-     * @param $resource
+     * @param $cacheItem
      * @return array
      */
-    public function valueMatcher($key, $resource)
+    protected function inCache($cacheItem)
     {
-        // comparaison entre la valeur en cache et la resource
-        if($key->get() == $resource)
-        {
-            // matched !!! : le connecté est bien le gestionnaire
-            return [
+        return [
                 'response' => true,
-                'data' => $key
+                'data'     => $cacheItem
             ];
-        }
+    }
 
-        // no matched : clé enregistrée mais pas appareillée avec ce connecté
+    /**
+     * @param $cacheItem
+     * @return array
+     */
+    protected function notInCache($cacheItem)
+    {
+        return [
+            'response' => false,
+            'data'     => $cacheItem
+        ];
+    }
+
+    /**
+     * @param $key
+     * @return array
+     */
+    protected function valueMatched($key)
+    {
+        return [
+            'response' => true,
+            'data' => $key
+        ];
+    }
+
+    /**
+     * @param $key
+     * @return array
+     */
+    protected function valueNotMatched($key)
+    {
         return [
             'response' => false,
             'data' => $key
         ];
     }
-
-    /* ================= / END V-2 ================= */
-
-
 
 
 }

@@ -42,9 +42,9 @@ class NotificationServerTest extends WebTestCase
 
         $msg = $this->messageFactory->monitoringConnexion();
 
-        $this->assertEquals($msg['type'], 'monitoring');
-        $this->assertEquals($msg['msg'], "Client connexted to server ok");
-        $this->assertEquals($msg['data']['is_handler'], false);
+        $this->assertEquals($msg['type'], 'initialisation');
+        $this->assertEquals($msg['msg'], "Client connected to server ok");
+        $this->assertEquals($msg['data']['is_handler'], true);
 
         $msg = json_encode($msg);
 

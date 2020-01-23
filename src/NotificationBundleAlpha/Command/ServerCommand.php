@@ -2,7 +2,9 @@
 namespace NotificationBundle\Command;
 
 
+use NotificationBundle\Manager\Cache\Cache;
 use NotificationBundle\Manager\Cache\NotificationCache;
+use NotificationBundle\Server\CacheAlpha;
 use NotificationBundle\Server\NotificationServer;
 use Ratchet\Http\HttpServer;
 use Ratchet\Server\IoServer;
@@ -28,8 +30,8 @@ class ServerCommand extends ContainerAwareCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         /** @var NotificationCache $cache */
-        $cache              = $this->getContainer()->get('notification.cache');
-        $messageFactory     = $this->getContainer()->get('notification.message');
+        $cache = $this->getContainer()->get('notification.cache');
+        $messageFactory = $this->getContainer()->get('notification.message');
         $notificationCenter = $this->getContainer()->get('notification.center');
 
 

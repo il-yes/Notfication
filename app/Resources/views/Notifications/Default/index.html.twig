@@ -1,8 +1,15 @@
 {% extends 'base.html.twig' %}
 
 {% block body %}
-
-    <div class="">
+    <client-custom
+        name="kyc"
+        title= {{ title }}
+        room="67"
+        id="{{ app.user.id }}"
+        username="{{ app.user.username }}"
+        email="{{ app.user.email }}"
+    ></client-custom>
+    <!-- <div class="">
         <h1>Notifications center</h1><small><em>{{ title }}</em></small>
         <p class="js-server-position"></p>
         <p class="js-server-notifications"></p>
@@ -14,12 +21,12 @@
         <p class=""></p>
         <p class=""></p>
         <p class=""></p>
-    </div>
+    </div> -->
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
-    <script src="{{ asset('js/src/Notification/client.js') }}"></script>
+    <script type="module" src="{{ asset('js/src/Notification/client-custom.js') }}"></script>
 
     <script>
     /*

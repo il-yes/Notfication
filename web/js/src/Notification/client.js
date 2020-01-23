@@ -16,7 +16,7 @@ $( document ).ready(function() {
     var conn = new WebSocket('ws://localhost:8081');
     //var notification = new Notification(conn, user, room);
 
-     conn.onopen = function(e) {
+     conn.onopen = function(e, t) {
          var notification = new Notification(conn, user, room);
          var notificationConnexion = notification.connect();
 

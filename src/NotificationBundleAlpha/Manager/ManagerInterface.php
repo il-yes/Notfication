@@ -7,8 +7,9 @@ Interface ManagerInterface
 {
     public function save();
 
-    public function processing($key, $value);
+    public function delete();
 
-    public function delete($key);
+    public function find();
 
+    public function getAll();
 }
